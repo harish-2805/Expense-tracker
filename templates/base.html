@@ -15,7 +15,6 @@
       --sidebar-width: 250px;
     }
     body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-    /* Sidebar */
     #sidebar {
       position: fixed; top: 0; left: 0; height: 100vh;
       width: var(--sidebar-width); background: var(--sidebar-bg);
@@ -38,7 +37,6 @@
       text-transform: uppercase; letter-spacing: 1px;
       padding: 1rem 1.5rem .25rem;
     }
-    /* Main content */
     #main-content { margin-left: var(--sidebar-width); min-height: 100vh; }
     .topbar {
       background: #fff; border-bottom: 1px solid #e2e8f0;
@@ -46,37 +44,40 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .page-content { padding: 1.5rem; }
-    /* Cards */
     .stat-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
     .stat-card .icon-box {
       width: 48px; height: 48px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
     }
-    /* Table */
     .table-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; }
-    /* Badges */
     .badge-category { font-size: .7rem; font-weight: 600; padding: .35em .65em; border-radius: 6px; }
-    /* Progress */
     .progress { height: 8px; border-radius: 4px; }
-    /* Alerts */
     .alert { border: none; border-radius: 10px; }
-    /* Form card */
     .form-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    /* Mobile */
     @media (max-width: 768px) {
       #sidebar { transform: translateX(-100%); }
       #sidebar.show { transform: translateX(0); }
       #main-content { margin-left: 0; }
     }
-    /* Insight cards */
     .insight-card { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: .75rem 1rem; }
+
+    /* --- FRIENDS badge pill --- */
+    #sidebar .nav-link .pending-badge {
+      margin-left: auto;
+      font-size: .65rem;
+      padding: .2em .55em;
+      border-radius: 20px;
+      background: #f59e0b;
+      color: #1e1b4b;
+      font-weight: 700;
+      line-height: 1.4;
+    }
   </style>
   {% block extra_css %}{% endblock %}
 </head>
 <body>
 
 {% if user.is_authenticated %}
-<!-- Sidebar -->
 <nav id="sidebar">
   <div class="brand">
     <h5><i class="bi bi-wallet2 me-2 text-indigo-300"></i>ExpenseTracker</h5>
@@ -111,6 +112,18 @@
       <i class="bi bi-person-plus"></i> Create Shared
     </a>
 
+    <!-- ↓ NEW FRIENDS SECTION -->
+    <div class="section-label">Friends</div>
+    <a href="{% url 'friends_list' %}" class="nav-link {% if 'friends' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-people-fill"></i> Friends
+      {% with count=user.get_pending_requests.count %}
+        {% if count %}
+          <span class="pending-badge">{{ count }}</span>
+        {% endif %}
+      {% endwith %}
+    </a>
+    <!-- ↑ END FRIENDS SECTION -->
+
     <div class="section-label">Account</div>
     <a href="{% url 'export_csv' %}" class="nav-link">
       <i class="bi bi-download"></i> Export CSV
@@ -121,7 +134,6 @@
   </div>
 </nav>
 
-<!-- Main -->
 <div id="main-content">
   <div class="topbar">
     <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle">
@@ -143,7 +155,6 @@
         </div>
       {% endfor %}
     {% endif %}
-
     {% block content %}{% endblock %}
   </div>
 </div>
@@ -154,7 +165,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Sidebar toggle for mobile
   const toggle = document.getElementById('sidebarToggle');
   if (toggle) toggle.addEventListener('click', () => document.getElementById('sidebar').classList.toggle('show'));
 </script>

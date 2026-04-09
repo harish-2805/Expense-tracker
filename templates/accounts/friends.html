@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">👥 Friends</h3>
+
+  <!-- Send Friend Request -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Add a Friend</h5>
+      <form method="post" action="{% url 'send_friend_request' %}" class="d-flex gap-2">
+        {% csrf_token %}
+        <input type="email" name="email" class="form-control" placeholder="Enter friend's email..." required>
+        <button type="submit" class="btn btn-primary">Send Request</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pending Received Requests -->
+  {% if pending_received %}
+  <div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <strong>📬 Pending Requests ({{ pending_received.count }})</strong>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for fr in pending_received %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ fr.from_user.email }}{% if fr.from_user.full_name %} — {{ fr.from_user.full_name }}{% endif %}</span>
+        <span>
+          <a href="{% url 'respond_friend_request' fr.pk 'accept' %}" class="btn btn-sm btn-success me-1">✔ Accept</a>
+          <a href="{% url 'respond_friend_request' fr.pk 'reject' %}" class="btn btn-sm btn-outline-danger">✘ Reject</a>
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Pending Sent Requests -->
+  {% if pending_sent %}
+  <div class="card mb-4 border-secondary">
+    <div class="card-header bg-light">
+      <strong>📤 Sent Requests</strong>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for fr in pending_sent %}
+      <li class="list-group-item text-muted">
+        {{ fr.to_user.email }} — <em>Awaiting response...</em>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Friends List -->
+  <div class="card">
+    <div class="card-header"><strong>✅ My Friends ({{ friends.count }})</strong></div>
+    {% if friends %}
+    <ul class="list-group list-group-flush">
+      {% for friend in friends %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-person-circle me-2"></i>
+          {{ friend.email }}{% if friend.full_name %} — {{ friend.full_name }}{% endif %}
+        </span>
+        <a href="{% url 'remove_friend' friend.pk %}"
+           class="btn btn-sm btn-outline-danger"
+           onclick="return confirm('Remove {{ friend.email }} from friends?')">Remove</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="card-body text-muted">No friends yet. Send a request above!</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

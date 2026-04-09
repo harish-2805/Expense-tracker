@@ -1,7 +1,8 @@
 from django import forms
 from .models import SharedExpense, Settlement
-from accounts.models import CustomUser
+from accounts.models import CustomUser, Friendship
 from datetime import date
+from django.db.models import Q
 
 
 class SharedExpenseForm(forms.ModelForm):
@@ -19,7 +20,8 @@ class SharedExpenseForm(forms.ModelForm):
     participants = forms.ModelMultipleChoiceField(
         queryset=CustomUser.objects.none(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'participant-checkbox'}),
-        required=True)
+        required=True,
+        help_text="Only your friends appear here. Add friends first if someone is missing.")  # ← new
 
     class Meta:
         model = SharedExpense
@@ -28,8 +30,9 @@ class SharedExpenseForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
-            # All users except self can be participants
-            self.fields['participants'].queryset = CustomUser.objects.exclude(pk=user.pk)
+            # ↓ ONLY CHANGE: show only accepted friends instead of all users
+            friends = user.get_friends()
+            self.fields['participants'].queryset = friends
 
 
 class SettlementForm(forms.ModelForm):
