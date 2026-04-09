@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load shared_extras %}
 {% block title %}Create Shared Expense{% endblock %}
 {% block page_title %}Create Shared Expense{% endblock %}
 
@@ -50,7 +51,7 @@
               </div>
             </div>
 
-            <!-- Manual Split Section (shown only for manual split) -->
+            <!-- Manual Split Section -->
             <div class="col-12" id="manualSplitSection" style="display:none;">
               <div class="card bg-light border-0">
                 <div class="card-body">
@@ -66,7 +67,8 @@
                         <div class="col-6">
                           <input type="number" name="share_{{ u.pk }}" step="0.01" min="0"
                                  class="form-control form-control-sm manual-share"
-                                 placeholder="0.00" value="{{ request.POST|get_item:'share_'|add:u.pk|default:'' }}">
+                                 placeholder="0.00"
+                                 value="{{ request.POST|get_item:u.pk }}">
                         </div>
                       </div>
                       {% endfor %}
@@ -105,11 +107,7 @@ const totalDisplayEl = document.getElementById('totalAmountDisplay');
 const currency = '{{ currency }}';
 
 function toggleManualSection() {
-  if (splitTypeEl.value === 'manual') {
-    manualSection.style.display = 'block';
-  } else {
-    manualSection.style.display = 'none';
-  }
+  manualSection.style.display = splitTypeEl.value === 'manual' ? 'block' : 'none';
 }
 
 function updateSharesTotal() {
@@ -127,7 +125,6 @@ splitTypeEl.addEventListener('change', toggleManualSection);
 totalAmountEl.addEventListener('input', updateSharesTotal);
 document.addEventListener('input', e => { if (e.target.classList.contains('manual-share')) updateSharesTotal(); });
 
-// Init
 toggleManualSection();
 </script>
 {% endblock %}
