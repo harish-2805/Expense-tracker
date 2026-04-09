@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Budgets{% endblock %}
+{% block page_title %}Budget Management{% endblock %}
+
+{% block content %}
+<!-- Month Selector -->
+<div class="card form-card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <select name="month" class="form-select form-select-sm">
+          {% for num, name in months %}
+            <option value="{{ num }}" {% if num == month %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="year" class="form-select form-select-sm">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-primary">View</button>
+      </div>
+      <div class="col-auto ms-auto">
+        <a href="{% url 'budget_add' %}" class="btn btn-sm btn-success"><i class="bi bi-plus me-1"></i>Set Budget</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="bi bi-piggy-bank"></i></div>
+        <div><div class="text-muted small">Total Budget</div><div class="fw-bold fs-5">{{ currency }}{{ total_budget|floatformat:2 }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-danger bg-opacity-10 text-danger"><i class="bi bi-cash"></i></div>
+        <div><div class="text-muted small">Total Spent</div><div class="fw-bold fs-5">{{ currency }}{{ total_spent|floatformat:2 }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-success bg-opacity-10 text-success"><i class="bi bi-wallet2"></i></div>
+        <div><div class="text-muted small">Remaining</div>
+          <div class="fw-bold fs-5 {% if total_remaining < 0 %}text-danger{% endif %}">{{ currency }}{{ total_remaining|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Budget List -->
+<div class="card table-card">
+  <div class="card-header bg-white py-3">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart me-2 text-primary"></i>Budgets for {{ month_name }}</h6>
+  </div>
+  <div class="card-body">
+    {% if budget_data %}
+      {% for item in budget_data %}
+      <div class="mb-4 p-3 border rounded-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <span class="fw-semibold">{{ item.budget.category }}</span>
+            {% if item.alert %}
+              <span class="badge bg-{{ item.status }} ms-2">{{ item.alert }}</span>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'budget_edit' item.budget.pk %}" class="btn btn-xs btn-outline-primary btn-sm"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'budget_delete' item.budget.pk %}" class="btn btn-xs btn-outline-danger btn-sm"><i class="bi bi-trash"></i></a>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between text-muted small mb-1">
+          <span>Spent: <strong class="text-dark">{{ currency }}{{ item.spent|floatformat:2 }}</strong></span>
+          <span>Budget: <strong class="text-dark">{{ currency }}{{ item.budget.amount|floatformat:2 }}</strong></span>
+          <span>Remaining: <strong class="{% if item.remaining < 0 %}text-danger{% else %}text-success{% endif %}">{{ currency }}{{ item.remaining|floatformat:2 }}</strong></span>
+        </div>
+        <div class="progress">
+          <div class="progress-bar bg-{{ item.status }}" style="width: {{ item.percentage }}%"></div>
+        </div>
+        <div class="text-end text-muted small mt-1">{{ item.actual_percentage|floatformat:1 }}% used</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-piggy-bank fs-2 d-block mb-2"></i>
+        No budgets set for {{ month_name }}.
+        <div class="mt-2"><a href="{% url 'budget_add' %}" class="btn btn-sm btn-primary">Set Your First Budget</a></div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if unbudgeted %}
+<div class="card form-card mt-3">
+  <div class="card-body">
+    <h6 class="fw-semibold text-muted mb-2">Categories without a budget:</h6>
+    <div class="d-flex flex-wrap gap-2">
+      {% for val, label in unbudgeted %}
+        <a href="{% url 'budget_add' %}?category={{ val }}" class="badge bg-secondary bg-opacity-10 text-secondary text-decoration-none">
+          <i class="bi bi-plus me-1"></i>{{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

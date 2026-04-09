@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — ExpenseTracker{% endblock %}
+{% block page_title %}Dashboard — {{ current_month_name }}{% endblock %}
+
+{% block content %}
+
+<!-- Budget Alerts -->
+{% for alert in budget_alerts %}
+<div class="alert alert-{{ alert.type }} d-flex align-items-center gap-2 py-2">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <strong>{{ alert.message }}</strong>
+</div>
+{% endfor %}
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-danger bg-opacity-10 text-danger"><i class="bi bi-cash-coin"></i></div>
+        <div>
+          <div class="text-muted small fw-semibold">Monthly Spending</div>
+          <div class="fs-5 fw-bold">{{ currency }}{{ total_monthly|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="bi bi-people-fill"></i></div>
+        <div>
+          <div class="text-muted small fw-semibold">Shared Expenses</div>
+          <div class="fs-5 fw-bold">{{ currency }}{{ shared_total|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-success bg-opacity-10 text-success"><i class="bi bi-piggy-bank-fill"></i></div>
+        <div>
+          <div class="text-muted small fw-semibold">Remaining Budget</div>
+          <div class="fs-5 fw-bold {% if remaining_budget < 0 %}text-danger{% endif %}">
+            {{ currency }}{{ remaining_budget|floatformat:2 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="icon-box bg-warning bg-opacity-10 text-warning"><i class="bi bi-bar-chart-fill"></i></div>
+        <div>
+          <div class="text-muted small fw-semibold">Total Budget Set</div>
+          <div class="fs-5 fw-bold">{{ currency }}{{ total_budget|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Category Spending -->
+  <div class="col-lg-6">
+    <div class="card table-card h-100">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2 text-primary"></i>Category Spending</h6>
+        {% if highest_category %}
+        <span class="badge bg-danger">🔥 Top: {{ highest_category }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if category_spending %}
+          {% for cat, amt in category_spending.items %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold">{{ cat }}</span>
+              <span class="small text-muted">{{ currency }}{{ amt|floatformat:2 }}</span>
+            </div>
+            {% with pct=amt|floatformat:0 %}
+            <div class="progress">
+              <div class="progress-bar {% if cat == highest_category %}bg-danger{% else %}bg-primary{% endif %}"
+                   style="width: {% widthratio amt total_monthly 100 %}%"></div>
+            </div>
+            {% endwith %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-bar-chart fs-2"></i>
+            <p class="mt-2 mb-0">No expenses this month</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="col-lg-6">
+    <div class="card table-card h-100">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Transactions</h6>
+        <a href="{% url 'expense_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        {% if all_recent %}
+        <ul class="list-group list-group-flush">
+          {% for txn in all_recent %}
+          <li class="list-group-item d-flex align-items-center gap-3 py-3">
+            <div class="flex-shrink-0">
+              {% if txn.type == 'shared' %}
+                <div class="icon-box bg-primary bg-opacity-10 text-primary" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-people"></i></div>
+              {% else %}
+                <div class="icon-box bg-danger bg-opacity-10 text-danger" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-receipt"></i></div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="fw-semibold text-truncate">{{ txn.title }}</div>
+              <div class="text-muted small">{{ txn.date }} &middot; <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ txn.category }}</span></div>
+            </div>
+            <div class="flex-shrink-0 text-end">
+              <div class="fw-bold text-danger">{{ currency }}{{ txn.amount|floatformat:2 }}</div>
+              <div class="badge {% if txn.type == 'shared' %}bg-primary{% else %}bg-success{% endif %} bg-opacity-10 {% if txn.type == 'shared' %}text-primary{% else %}text-success{% endif %} small">{{ txn.type|title }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-inbox fs-2"></i>
+            <p class="mt-2 mb-0">No transactions yet</p>
+            <a href="{% url 'expense_add' %}" class="btn btn-sm btn-primary mt-2">Add your first expense</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Insights -->
+<div class="card table-card">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-lightbulb me-2 text-warning"></i>Insights & Suggestions</h6>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for insight in insights %}
+      <div class="col-md-6">
+        <div class="insight-card border-{{ insight.type }} bg-{{ insight.type }} bg-opacity-10">
+          <div class="d-flex align-items-start gap-2">
+            <i class="{{ insight.icon }} text-{{ insight.type }} mt-1"></i>
+            <span class="small">{{ insight.message }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

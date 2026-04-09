@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Shared Expenses{% endblock %}
+{% block page_title %}Shared Expenses{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'shared_expense_create' %}" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Create Shared Expense</a>
+</div>
+
+<div class="card table-card">
+  <div class="card-header bg-white py-3">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Shared Expenses</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Title</th>
+          <th>Total Amount</th>
+          <th>My Share</th>
+          <th>Amount Due</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in expense_data %}
+        <tr>
+          <td>
+            <a href="{% url 'shared_expense_detail' item.expense.pk %}" class="fw-semibold text-decoration-none">{{ item.expense.title }}</a>
+            <div class="text-muted small">{{ item.expense.get_participants_count }} participants &middot; {{ item.expense.split_type|title }} split</div>
+          </td>
+          <td class="fw-semibold">{{ currency }}{{ item.expense.total_amount|floatformat:2 }}</td>
+          <td>{{ currency }}{{ item.my_share|floatformat:2 }}</td>
+          <td>
+            {% if item.is_payer %}
+              <span class="text-success small fw-semibold">You paid</span>
+            {% elif item.amount_due > 0 %}
+              <span class="text-danger fw-bold">{{ currency }}{{ item.amount_due|floatformat:2 }}</span>
+            {% else %}
+              <span class="text-success small">Settled</span>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ item.expense.date }}</td>
+          <td>
+            {% if item.is_settled or item.is_payer %}
+              <span class="badge bg-success">Settled</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'shared_expense_detail' item.expense.pk %}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">
+            <i class="bi bi-people fs-2 d-block mb-2"></i>
+            No shared expenses yet.
+            <div class="mt-2"><a href="{% url 'shared_expense_create' %}" class="btn btn-sm btn-primary">Create one now</a></div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

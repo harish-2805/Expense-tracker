@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Create Shared Expense{% endblock %}
+{% block page_title %}Create Shared Expense{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card form-card">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Create Shared Expense</h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" id="sharedForm">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Total Amount ({{ currency }}) <span class="text-danger">*</span></label>
+              {{ form.total_amount }}
+              {% if form.total_amount.errors %}<div class="text-danger small">{{ form.total_amount.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Split Type</label>
+              {{ form.split_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Date</label>
+              {{ form.date }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notes</label>
+              {{ form.notes }}
+            </div>
+
+            <!-- Participant Selection -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Select Participants <span class="text-danger">*</span></label>
+              <p class="text-muted small mb-2">You are automatically the payer. Select who else is involved:</p>
+              <div class="border rounded p-3" style="max-height:200px;overflow-y:auto;">
+                {% if form.participants.field.queryset.exists %}
+                  {{ form.participants }}
+                  {% if form.participants.errors %}<div class="text-danger small mt-1">{{ form.participants.errors }}</div>{% endif %}
+                {% else %}
+                  <p class="text-muted small mb-0">No other users registered yet. Invite friends to join!</p>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Manual Split Section (shown only for manual split) -->
+            <div class="col-12" id="manualSplitSection" style="display:none;">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <h6 class="fw-semibold mb-3"><i class="bi bi-sliders me-2"></i>Manual Split Amounts</h6>
+                  <p class="text-muted small">The sum of all shares must equal the total amount.</p>
+                  <div id="manualInputs">
+                    {% if all_users %}
+                      {% for u in all_users %}
+                      <div class="row align-items-center mb-2">
+                        <div class="col-6">
+                          <label class="form-label mb-0 small fw-semibold">{{ u.full_name|default:u.email }}</label>
+                        </div>
+                        <div class="col-6">
+                          <input type="number" name="share_{{ u.pk }}" step="0.01" min="0"
+                                 class="form-control form-control-sm manual-share"
+                                 placeholder="0.00" value="{{ request.POST|get_item:'share_'|add:u.pk|default:'' }}">
+                        </div>
+                      </div>
+                      {% endfor %}
+                    {% else %}
+                      <p class="text-muted small">Select participants first to set manual amounts.</p>
+                    {% endif %}
+                  </div>
+                  <div class="mt-2 p-2 bg-white rounded border">
+                    <span class="small fw-semibold">Sum of shares: </span>
+                    <span id="sharesTotal" class="fw-bold text-primary">{{ currency }}0.00</span>
+                    <span class="text-muted small"> / Total: <span id="totalAmountDisplay">{{ currency }}0.00</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i>Create Shared Expense</button>
+            <a href="{% url 'shared_expense_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const splitTypeEl = document.getElementById('id_split_type');
+const manualSection = document.getElementById('manualSplitSection');
+const totalAmountEl = document.getElementById('id_total_amount');
+const sharesTotalEl = document.getElementById('sharesTotal');
+const totalDisplayEl = document.getElementById('totalAmountDisplay');
+const currency = '{{ currency }}';
+
+function toggleManualSection() {
+  if (splitTypeEl.value === 'manual') {
+    manualSection.style.display = 'block';
+  } else {
+    manualSection.style.display = 'none';
+  }
+}
+
+function updateSharesTotal() {
+  let total = 0;
+  document.querySelectorAll('.manual-share').forEach(el => {
+    total += parseFloat(el.value) || 0;
+  });
+  sharesTotalEl.textContent = currency + total.toFixed(2);
+  const grandTotal = parseFloat(totalAmountEl.value) || 0;
+  totalDisplayEl.textContent = currency + grandTotal.toFixed(2);
+  sharesTotalEl.className = Math.abs(total - grandTotal) < 0.02 ? 'fw-bold text-success' : 'fw-bold text-danger';
+}
+
+splitTypeEl.addEventListener('change', toggleManualSection);
+totalAmountEl.addEventListener('input', updateSharesTotal);
+document.addEventListener('input', e => { if (e.target.classList.contains('manual-share')) updateSharesTotal(); });
+
+// Init
+toggleManualSection();
+</script>
+{% endblock %}

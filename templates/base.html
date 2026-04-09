@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ExpenseTracker{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #818cf8;
+      --sidebar-bg: #1e1b4b;
+      --sidebar-width: 250px;
+    }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+    /* Sidebar */
+    #sidebar {
+      position: fixed; top: 0; left: 0; height: 100vh;
+      width: var(--sidebar-width); background: var(--sidebar-bg);
+      z-index: 1000; overflow-y: auto; transition: transform .3s ease;
+    }
+    #sidebar .brand { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,.1); }
+    #sidebar .brand h5 { color: #fff; font-weight: 700; margin: 0; }
+    #sidebar .nav-link {
+      color: rgba(255,255,255,.7); padding: .65rem 1.5rem;
+      display: flex; align-items: center; gap: .75rem;
+      border-radius: 0; transition: all .2s;
+    }
+    #sidebar .nav-link:hover, #sidebar .nav-link.active {
+      color: #fff; background: rgba(255,255,255,.12);
+      border-left: 3px solid var(--primary-light);
+    }
+    #sidebar .nav-link i { font-size: 1.1rem; }
+    #sidebar .section-label {
+      color: rgba(255,255,255,.35); font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 1rem 1.5rem .25rem;
+    }
+    /* Main content */
+    #main-content { margin-left: var(--sidebar-width); min-height: 100vh; }
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e2e8f0;
+      padding: .75rem 1.5rem; position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-content { padding: 1.5rem; }
+    /* Cards */
+    .stat-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .stat-card .icon-box {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    /* Table */
+    .table-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; }
+    /* Badges */
+    .badge-category { font-size: .7rem; font-weight: 600; padding: .35em .65em; border-radius: 6px; }
+    /* Progress */
+    .progress { height: 8px; border-radius: 4px; }
+    /* Alerts */
+    .alert { border: none; border-radius: 10px; }
+    /* Form card */
+    .form-card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    /* Mobile */
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.show { transform: translateX(0); }
+      #main-content { margin-left: 0; }
+    }
+    /* Insight cards */
+    .insight-card { border-left: 4px solid; border-radius: 0 8px 8px 0; padding: .75rem 1rem; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="brand">
+    <h5><i class="bi bi-wallet2 me-2 text-indigo-300"></i>ExpenseTracker</h5>
+    <small class="text-white-50">{{ user.full_name|default:user.email }}</small>
+  </div>
+
+  <div class="py-2">
+    <div class="section-label">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{% url 'expense_list' %}" class="nav-link {% if 'expense' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-receipt"></i> My Expenses
+    </a>
+    <a href="{% url 'expense_add' %}" class="nav-link">
+      <i class="bi bi-plus-circle"></i> Add Expense
+    </a>
+
+    <div class="section-label">Budget</div>
+    <a href="{% url 'budget_list' %}" class="nav-link {% if 'budget' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-piggy-bank"></i> Budgets
+    </a>
+    <a href="{% url 'budget_add' %}" class="nav-link">
+      <i class="bi bi-plus-square"></i> Set Budget
+    </a>
+
+    <div class="section-label">Shared</div>
+    <a href="{% url 'shared_expense_list' %}" class="nav-link {% if 'shared' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-people"></i> Shared Expenses
+    </a>
+    <a href="{% url 'shared_expense_create' %}" class="nav-link">
+      <i class="bi bi-person-plus"></i> Create Shared
+    </a>
+
+    <div class="section-label">Account</div>
+    <a href="{% url 'export_csv' %}" class="nav-link">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+    <a href="{% url 'logout' %}" class="nav-link text-danger-emphasis">
+      <i class="bi bi-box-arrow-left"></i> Logout
+    </a>
+  </div>
+</nav>
+
+<!-- Main -->
+<div id="main-content">
+  <div class="topbar">
+    <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="fw-semibold text-muted">{% block page_title %}{% endblock %}</div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary">{{ user.preferred_currency }}</span>
+      <span class="text-muted small">{{ user.full_name|default:user.email }}</span>
+    </div>
+  </div>
+
+  <div class="page-content">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sidebar toggle for mobile
+  const toggle = document.getElementById('sidebarToggle');
+  if (toggle) toggle.addEventListener('click', () => document.getElementById('sidebar').classList.toggle('show'));
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

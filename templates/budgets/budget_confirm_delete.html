@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Delete Budget{% endblock %}
+{% block page_title %}Delete Budget{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card form-card border-danger">
+      <div class="card-body text-center p-5">
+        <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+        <h5 class="mt-3">Delete Budget?</h5>
+        <p class="text-muted">Remove budget for <strong>{{ budget.category }}</strong> ({{ budget.month }}/{{ budget.year }})?</p>
+        <form method="post" class="d-flex justify-content-center gap-3 mt-4">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+          <a href="{% url 'budget_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ expense.title }}{% endblock %}
+{% block page_title %}Expense Detail{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card form-card">
+      <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-bold">{{ expense.title }}</h5>
+        <span class="badge bg-{{ expense.get_category_color }}">{{ expense.category }}</span>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-5 text-muted">Amount</dt>
+          <dd class="col-7 fw-bold text-danger fs-5">{{ currency }}{{ expense.amount|floatformat:2 }}</dd>
+          <dt class="col-5 text-muted">Category</dt>
+          <dd class="col-7">{{ expense.category }}</dd>
+          <dt class="col-5 text-muted">Payment Method</dt>
+          <dd class="col-7">{{ expense.payment_method }}</dd>
+          <dt class="col-5 text-muted">Date</dt>
+          <dd class="col-7">{{ expense.date }}</dd>
+          <dt class="col-5 text-muted">Type</dt>
+          <dd class="col-7"><span class="badge bg-success">Personal</span></dd>
+          {% if expense.notes %}
+          <dt class="col-5 text-muted">Notes</dt>
+          <dd class="col-7">{{ expense.notes }}</dd>
+          {% endif %}
+          <dt class="col-5 text-muted">Added On</dt>
+          <dd class="col-7 text-muted small">{{ expense.created_at|date:"d M Y, H:i" }}</dd>
+        </dl>
+        <div class="d-flex gap-2 mt-3">
+          <a href="{% url 'expense_edit' expense.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
+          <a href="{% url 'expense_delete' expense.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</a>
+          <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary ms-auto">← Back</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
